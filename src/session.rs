@@ -73,8 +73,13 @@ fn new_vt(cols: u16, rows: u16) -> Vt {
         .build()
 }
 
-/// Run until the agent exits. Returns its exit code.
-pub fn run(pty: Arc<ConPty>, bar_source: Box<dyn Fn() -> BarData + Send>) -> io::Result<i32> {
+/// Run until the agent exits; the bar is labelled `agent` until the agent sets a title.
+/// Returns the agent's exit code.
+pub fn run(
+    pty: Arc<ConPty>,
+    agent: &str,
+    bar_source: Box<dyn Fn() -> BarData + Send>,
+) -> io::Result<i32> {
     let (mut cols, mut rows, cursor_row) = console::size_and_cursor()?;
     let raw = RawMode::enter()?;
     let mut out = io::stdout().lock();
@@ -137,6 +142,7 @@ pub fn run(pty: Arc<ConPty>, bar_source: Box<dyn Fn() -> BarData + Send>) -> io:
     let mut pending = Vec::new();
     let mut scrolled: Vec<Line> = Vec::new();
     let mut bar = BarData::default();
+    let mut label = agent.to_string();
     let mut dirty = true;
     let mut last_frame = Instant::now() - FRAME_INTERVAL;
     let mut last_resize_check = Instant::now();
@@ -157,6 +163,11 @@ pub fn run(pty: Arc<ConPty>, bar_source: Box<dyn Fn() -> BarData + Send>) -> io:
                             let c = vt.cursor();
                             let reply = format!("\x1b[{};{}R", c.row + 1, c.col + 1);
                             let _ = pty.write(reply.as_bytes());
+                        }
+                        Passthrough::Title(title) => {
+                            if let Some(short) = statusbar::session_label(&title) {
+                                label = short;
+                            }
                         }
                     }
                 }
@@ -185,7 +196,7 @@ pub fn run(pty: Arc<ConPty>, bar_source: Box<dyn Fn() -> BarData + Send>) -> io:
         }
 
         if dirty && last_frame.elapsed() >= FRAME_INTERVAL {
-            let bar_line = statusbar::render(&bar, cols as usize);
+            let bar_line = statusbar::render(&bar, &label, cols as usize);
             let frame = screen::frame(&vt, &scrolled, content_rows(rows) as usize, &bar_line);
             out.write_all(frame.as_bytes())?;
             out.flush()?;

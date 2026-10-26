@@ -9,7 +9,7 @@ Optimus wraps each agent in a Windows Job Object:
 - **Budget per agent.** `--budget 3G` covers the agent and every process it starts (Node, ripgrep, MCP servers). Soft by default: you are told, nothing is killed. `--hard` makes the budget a wall.
 - **Admission control.** Optimus refuses to start an agent the machine cannot fit, or waits for room with `--wait`.
 - **No orphans.** When the agent exits, anything it left running is ended.
-- **A live memory bar under the agent.** One line at the bottom of the same window shows the agent's committed memory against its budget, how much room the PC has left, and how many agents are running. Green, amber at 80%, red when over.
+- **A live memory bar under the agent.** One line at the bottom of the same window shows the session's name (from the title the agent sets, e.g. Claude Code's task name, shortened), its committed memory against its budget, how much room the PC has left, and how many agents are running. Green, amber at 80%, red when over.
 - **Real numbers.** `optimus top` shows committed memory per agent tree, plus how much is still safe to use.
 
 It works in any terminal or multiplexer: Windows Terminal, VS Code, Orca, herdr, plain PowerShell.
@@ -30,7 +30,7 @@ Claude Code runs as usual, with the bar underneath:
 │ > fix the failing test in run.rs                       │
 │ ● Editing src/run.rs (+12 -3)                          │
 ╰────────────────────────────────────────────────────────╯
- optimus ▕██████████░░░░░░▏ 2.1 GB/3.0 GB soft │ PC 1.4 GB safe │ 3 agents
+ Fix failing test ▕██████████░░░░░░▏ 2.1 GB/3.0 GB soft │ PC 1.4 GB safe │ 3 agents
 ```
 
 For every agent at once, run `optimus top` (add `--watch` to refresh):

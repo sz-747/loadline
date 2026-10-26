@@ -118,7 +118,7 @@ fn bar_under_agent_output_and_summary_after() {
     assert!(screen.contains("hello-from-agent"), "{screen}");
     let last = screen.lines().last().unwrap_or_default();
     assert!(
-        last.starts_with(" optimus "),
+        last.starts_with(" cmd "),
         "bar not on the last row: {last:?}"
     );
     assert!(last.contains("PC ") && last.contains("agents"), "{last:?}");
@@ -139,7 +139,7 @@ fn bar_under_agent_output_and_summary_after() {
 fn keystrokes_reach_the_agent() {
     let mut h = Harness::start(&["run", "--", "cmd", "/q", "/k", "prompt $g"]);
     assert!(
-        h.wait_for(" optimus ", Duration::from_secs(10)),
+        h.wait_for(" cmd ", Duration::from_secs(10)),
         "{}",
         h.screen()
     );
@@ -188,7 +188,12 @@ fn real_claude_code_renders_with_bar() {
     println!("----- screen -----\n{}\n------------------", h.screen());
     assert!(shown, "bar never appeared");
     let last = h.screen().lines().last().unwrap_or_default().to_string();
-    assert!(last.starts_with(" optimus "), "{last:?}");
+    // Labelled with the session name Claude Code puts in the title, or "claude".
+    assert!(last.contains("3.0 GB soft"), "{last:?}");
+    println!(
+        "bar label: {:?}",
+        last.split('\u{2595}').next().unwrap_or_default()
+    );
     // Two Ctrl+C presses quit Claude Code.
     h.type_text("\x03");
     h.pump(Duration::from_millis(300));

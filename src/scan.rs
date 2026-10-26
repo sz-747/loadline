@@ -15,6 +15,8 @@ pub enum Passthrough {
     /// A complete sequence to write to the real terminal as-is.
     Forward(String),
     CursorQuery,
+    /// The window title the agent set (its text only).
+    Title(String),
 }
 
 #[derive(Default)]
@@ -105,6 +107,9 @@ fn osc(body: &str, terminator: &str, out: &mut Vec<Passthrough>) {
     if body.starts_with("0;") || body.starts_with("2;") || body.starts_with("9;4;") {
         out.push(Passthrough::Forward(format!("\x1b]{body}{terminator}")));
     }
+    if let Some(title) = body.strip_prefix("0;").or_else(|| body.strip_prefix("2;")) {
+        out.push(Passthrough::Title(title.to_string()));
+    }
 }
 
 #[cfg(test)]
@@ -131,7 +136,11 @@ mod tests {
         let mut s = Scanner::default();
         assert_eq!(
             s.scan("\x1b]0;Claude Code\x07\x1b]9;4;1;50\x1b\\\x1b]8;;http://x\x07"),
-            vec![fwd("\x1b]0;Claude Code\x07"), fwd("\x1b]9;4;1;50\x1b\\")]
+            vec![
+                fwd("\x1b]0;Claude Code\x07"),
+                Passthrough::Title("Claude Code".into()),
+                fwd("\x1b]9;4;1;50\x1b\\")
+            ]
         );
     }
 
@@ -148,6 +157,9 @@ mod tests {
         assert!(s.scan("[?20").is_empty());
         assert_eq!(s.scan("04l rest"), vec![fwd("\x1b[?2004l")]);
         assert!(s.scan("\x1b]2;ti").is_empty());
-        assert_eq!(s.scan("tle\x07"), vec![fwd("\x1b]2;title\x07")]);
+        assert_eq!(
+            s.scan("tle\x07"),
+            vec![fwd("\x1b]2;title\x07"), Passthrough::Title("title".into())]
+        );
     }
 }

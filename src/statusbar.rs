@@ -50,12 +50,49 @@ fn seg(parts: &[(&str, &str)]) -> Seg {
     Seg { styled, width }
 }
 
-/// Render the bar for a terminal `cols` wide. The visible text never exceeds
-/// `cols - 1` cells (writing the last cell of the last row can scroll some consoles);
-/// the background is extended to the edge with erase-to-end-of-line.
-pub fn render(data: &BarData, cols: usize) -> String {
+/// Longest session label shown in the bar, in characters.
+pub const LABEL_MAX: usize = 20;
+
+/// A short session label from the window title the agent sets ("✳ Fix login bug" ->
+/// "Fix login bug"). Leading status glyphs and spinners are dropped, long titles are cut
+/// at a word boundary. Titles that are just a program path (what a console shows by
+/// default) are ignored, so the caller keeps the agent's name.
+pub fn session_label(title: &str) -> Option<String> {
+    let trimmed = title.trim_start_matches(|c: char| !c.is_alphanumeric());
+    let words: Vec<&str> = trimmed.split_whitespace().collect();
+    let text = words.join(" ");
+    if text.is_empty() || text.contains(":\\") || text.starts_with("\\\\") {
+        return None;
+    }
+    if text.chars().count() <= LABEL_MAX {
+        return Some(text);
+    }
+    let mut label = String::new();
+    for word in words {
+        let extra = if label.is_empty() { 0 } else { 1 };
+        if label.chars().count() + extra + word.chars().count() > LABEL_MAX - 1 {
+            break;
+        }
+        if extra == 1 {
+            label.push(' ');
+        }
+        label.push_str(word);
+    }
+    if label.is_empty() {
+        // A single very long word: hard cut.
+        label = text.chars().take(LABEL_MAX - 1).collect();
+    }
+    label.push('\u{2026}');
+    Some(label)
+}
+
+/// Render the bar for a terminal `cols` wide, labelled with the session name. The
+/// visible text never exceeds `cols - 1` cells (writing the last cell of the last row
+/// can scroll some consoles); the background is extended to the edge with
+/// erase-to-end-of-line.
+pub fn render(data: &BarData, label: &str, cols: usize) -> String {
     let max = cols.saturating_sub(1);
-    let mut segments = vec![seg(&[(LABEL, " optimus ")])];
+    let mut segments = vec![seg(&[(LABEL, &format!(" {label} "))])];
 
     let usage = match data.budget {
         Some(budget) => {
@@ -111,8 +148,20 @@ pub fn render(data: &BarData, cols: usize) -> String {
 
     let mut width: usize = segments.iter().map(|s| s.width).sum();
     if width > max {
-        // Too narrow even for the essentials: show only the label and figures.
+        // Too narrow even for the essentials: drop the meter first...
         segments.retain(|s| !s.styled.contains('\u{2588}') && !s.styled.contains('\u{2591}'));
+        width = segments.iter().map(|s| s.width).sum();
+    }
+    if width > max {
+        // ...then shorten the label so the figures stay visible.
+        let others = width - segments[0].width;
+        let room = max.saturating_sub(others + 2);
+        segments[0] = if room >= 4 {
+            let short: String = label.chars().take(room - 1).collect();
+            seg(&[(LABEL, &format!(" {}\u{2026} ", short.trim_end()))])
+        } else {
+            seg(&[(LABEL, " ")])
+        };
         width = segments.iter().map(|s| s.width).sum();
     }
     for s in optional {
@@ -169,19 +218,59 @@ mod tests {
     }
 
     #[test]
+    fn session_labels_from_titles() {
+        assert_eq!(
+            session_label("\u{2733} Claude Code").as_deref(),
+            Some("Claude Code")
+        );
+        assert_eq!(
+            session_label("\u{2810} Fix login bug").as_deref(),
+            Some("Fix login bug")
+        );
+        assert_eq!(
+            session_label("\u{2733} Refactor the memory governor and add tests").as_deref(),
+            Some("Refactor the memory\u{2026}")
+        );
+        assert_eq!(
+            session_label("Supercalifragilisticexpialidocious").as_deref(),
+            Some("Supercalifragilisti\u{2026}")
+        );
+        assert_eq!(session_label("C:\\WINDOWS\\system32\\cmd.exe"), None);
+        assert_eq!(session_label("  \u{2733}  "), None);
+        for title in [
+            "\u{2733} Refactor the memory governor and add tests",
+            "x".repeat(50).as_str(),
+        ] {
+            assert!(session_label(title).unwrap().chars().count() <= LABEL_MAX);
+        }
+    }
+
+    #[test]
+    fn long_label_shrinks_before_figures_go() {
+        let text = plain(&render(
+            &data(GB, Some(2 * GB)),
+            "Fix login bug in auth",
+            36,
+        ));
+        assert!(text.contains("1.0 GB/2.0 GB soft"), "{text:?}");
+        assert!(text.contains('\u{2026}'), "{text:?}");
+        assert!(text.chars().count() < 36);
+    }
+
+    #[test]
     fn full_bar_on_wide_terminal() {
-        let text = plain(&render(&data(GB, Some(2 * GB)), 120));
+        let text = plain(&render(&data(GB, Some(2 * GB)), "claude", 120));
         assert_eq!(
             text,
-            " optimus \u{2595}\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{258f} 1.0 GB/2.0 GB soft \u{2502} PC 1.5 GB safe \u{2502} 3 agents"
+            " claude \u{2595}\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{258f} 1.0 GB/2.0 GB soft \u{2502} PC 1.5 GB safe \u{2502} 3 agents"
         );
     }
 
     #[test]
     fn colors_follow_usage() {
-        assert!(render(&data(GB, Some(2 * GB)), 120).contains(GREEN));
-        assert!(render(&data(17 * GB / 10, Some(2 * GB)), 120).contains(AMBER));
-        let over = render(&data(3 * GB, Some(2 * GB)), 120);
+        assert!(render(&data(GB, Some(2 * GB)), "claude", 120).contains(GREEN));
+        assert!(render(&data(17 * GB / 10, Some(2 * GB)), "claude", 120).contains(AMBER));
+        let over = render(&data(3 * GB, Some(2 * GB)), "claude", 120);
         assert!(over.contains(RED));
         assert!(plain(&over).contains("soft OVER"));
     }
@@ -189,21 +278,21 @@ mod tests {
     #[test]
     fn never_wider_than_terminal() {
         for cols in [10, 20, 30, 45, 60, 80, 200] {
-            let text = plain(&render(&data(GB, Some(2 * GB)), cols));
+            let text = plain(&render(&data(GB, Some(2 * GB)), "claude", cols));
             assert!(text.chars().count() < cols, "cols {cols}: {text:?}");
         }
     }
 
     #[test]
     fn narrow_terminal_drops_meter_first() {
-        let text = plain(&render(&data(GB, Some(2 * GB)), 40));
+        let text = plain(&render(&data(GB, Some(2 * GB)), "claude", 40));
         assert!(!text.contains('\u{2588}'));
         assert!(text.contains("1.0 GB/2.0 GB soft"));
     }
 
     #[test]
     fn without_budget() {
-        let text = plain(&render(&data(GB, None), 120));
+        let text = plain(&render(&data(GB, None), "claude", 120));
         assert!(text.contains("1.0 GB committed"));
     }
 }

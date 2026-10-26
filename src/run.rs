@@ -365,6 +365,10 @@ fn run_with_bar(
             agents: report.map_or(1, |r| r.agents.len().max(1)),
         }
     };
-    let code = session::run(pty, Box::new(source))?;
+    // "C:\tools\claude.exe" -> "claude", until the agent names its session.
+    let agent = std::path::Path::new(label)
+        .file_stem()
+        .map_or_else(|| label.to_string(), |s| s.to_string_lossy().into_owned());
+    let code = session::run(pty, &agent, Box::new(source))?;
     Ok(guard.finish(code))
 }
