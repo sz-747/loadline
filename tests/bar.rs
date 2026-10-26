@@ -111,7 +111,7 @@ fn bar_under_agent_output_and_summary_after() {
     ]);
     assert!(
         h.wait_for("2.0 GB soft", Duration::from_secs(10)),
-        "bar never appeared:\n{}",
+        "bar never appeared:\n{}", // public-scan: allow (a newline escape, not a drive path)
         h.screen()
     );
     let screen = h.screen();
@@ -131,7 +131,7 @@ fn bar_under_agent_output_and_summary_after() {
     );
     assert!(
         !screen.contains("2.0 GB soft"),
-        "bar left behind:\n{screen}"
+        "bar left behind:\n{screen}" // public-scan: allow (a newline escape, not a drive path)
     );
 }
 
