@@ -2,7 +2,7 @@
 //! screen itself and keep the bottom line for the status bar.
 //!
 //! The child is created suspended: the caller assigns it to the job, then calls
-//! [`ConPty::resume`]. Adapted from the multiplexer engine on the `backup/*` branches.
+//! [`ConPty::resume`]. Adapted from the Optimus multiplexer's terminal engine.
 
 use std::ffi::c_void;
 use std::io;
