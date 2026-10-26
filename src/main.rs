@@ -1,27 +1,16 @@
-//! Optimus: a memory guard for AI coding agents on Windows.
-
-mod admission;
-mod job;
-mod resolve;
-mod run;
-mod size;
-mod state;
-mod sys;
-mod top;
-mod tree;
-
 use std::process::ExitCode;
 
 use clap::{Parser, Subcommand};
+use optimus::{run, size, top};
 
 #[derive(Parser)]
 #[command(
     name = "optimus",
     version,
     about = "Memory guard for AI coding agents on Windows",
-    long_about = "Run each agent inside a memory budget, refuse to start one the machine \
-                  cannot fit, see what every agent really commits, and leave no orphaned \
-                  processes behind."
+    long_about = "Run each agent inside a memory budget with a live memory bar under it, \
+                  refuse to start one the machine cannot fit, see what every agent really \
+                  commits, and leave no orphaned processes behind."
 )]
 struct Cli {
     #[command(subcommand)]
@@ -51,6 +40,9 @@ enum Cmd {
         /// Leave processes the agent started running after it exits.
         #[arg(long)]
         keep_children: bool,
+        /// Run without the memory bar (the agent gets the console directly).
+        #[arg(long)]
+        no_bar: bool,
         /// The agent command and its arguments.
         #[arg(required = true, trailing_var_arg = true, allow_hyphen_values = true)]
         command: Vec<String>,
@@ -79,6 +71,7 @@ fn main() -> ExitCode {
             wait,
             force,
             keep_children,
+            no_bar,
             command,
         } => run::run(run::RunArgs {
             budget,
@@ -87,6 +80,7 @@ fn main() -> ExitCode {
             wait,
             force,
             keep_children,
+            no_bar,
             command,
         }),
         Cmd::Top {
