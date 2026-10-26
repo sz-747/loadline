@@ -1,6 +1,6 @@
 //! A Windows Job Object around one agent and every process it starts.
 //!
-//! - Kill-on-close (default): when Optimus exits, the OS ends the whole tree, so no
+//! - Kill-on-close (default): when Loadline exits, the OS ends the whole tree, so no
 //!   orphaned agent or MCP processes are left holding memory.
 //! - Soft budget: a job-wide notification limit. Windows posts a message to our
 //!   completion port when the tree's committed memory crosses it; nothing is killed.

@@ -1,11 +1,11 @@
 use std::process::ExitCode;
 
 use clap::{Parser, Subcommand};
-use optimus::{run, size, top};
+use loadline::{run, size, top};
 
 #[derive(Parser)]
 #[command(
-    name = "optimus",
+    name = "loadline",
     version,
     about = "Memory guard for AI coding agents on Windows",
     long_about = "Run each agent inside a memory budget with a live memory bar under it, \
@@ -19,7 +19,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Cmd {
-    /// Run an agent inside a memory budget: optimus run --budget 3G -- claude
+    /// Run an agent inside a memory budget: loadline run --budget 3G -- claude
     Run {
         /// Memory budget for the agent and everything it starts (e.g. 3G, 1500M).
         /// Soft by default: you are told, nothing is killed.
@@ -92,7 +92,7 @@ fn main() -> ExitCode {
     match result {
         Ok(code) => code,
         Err(e) => {
-            eprintln!("optimus: {e}");
+            eprintln!("loadline: {e}");
             ExitCode::FAILURE
         }
     }

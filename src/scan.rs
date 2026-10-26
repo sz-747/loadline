@@ -2,7 +2,7 @@
 //! terminal (or need an answer), while all output still goes to the emulator.
 //!
 //! - Input modes the agent turns on or off (arrow-key mode, mouse, bracketed paste,
-//!   focus events), because the real terminal produces the keys Optimus forwards.
+//!   focus events), because the real terminal produces the keys Loadline forwards.
 //! - Window title and progress (OSC 0, 2, 9;4), so the tab title keeps working.
 //! - Cursor position queries (CSI 6n), answered from the emulator.
 
@@ -127,7 +127,7 @@ mod tests {
             s.scan("hi\x1b[?2004h\x1b[?25l\x1b[?1;25;1006h\x1b[2J"),
             vec![fwd("\x1b[?2004h"), fwd("\x1b[?1;1006h")]
         );
-        // Win32 input mode stays between Optimus and the agent's pseudoconsole.
+        // Win32 input mode stays between Loadline and the agent's pseudoconsole.
         assert!(s.scan("\x1b[?9001h").is_empty());
     }
 

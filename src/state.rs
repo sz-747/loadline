@@ -1,5 +1,5 @@
-//! On-disk state under `%LOCALAPPDATA%\optimus`: one file per live guarded run (read by
-//! `optimus top`) and an append-only event log.
+//! On-disk state under `%LOCALAPPDATA%\loadline`: one file per live guarded run (read by
+//! `loadline top`) and an append-only event log.
 
 use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 pub struct RunRecord {
     /// Root process of the guarded agent tree.
     pub pid: u32,
-    /// The `optimus run` process that owns the job.
+    /// The `loadline run` process that owns the job.
     pub guard_pid: u32,
     pub command: String,
     pub budget: Option<u64>,
@@ -28,13 +28,13 @@ pub fn now() -> u64 {
 }
 
 pub fn root_dir() -> PathBuf {
-    if let Some(dir) = std::env::var_os("OPTIMUS_HOME") {
+    if let Some(dir) = std::env::var_os("LOADLINE_HOME") {
         return PathBuf::from(dir);
     }
     let base = std::env::var_os("LOCALAPPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(std::env::temp_dir);
-    base.join("optimus")
+    base.join("loadline")
 }
 
 fn runs_dir() -> PathBuf {

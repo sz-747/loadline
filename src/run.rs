@@ -1,4 +1,4 @@
-//! `optimus run`: admission check, then start the agent suspended inside a job, resume
+//! `loadline run`: admission check, then start the agent suspended inside a job, resume
 //! it, watch its memory, and end anything it leaves behind.
 //!
 //! In an interactive console the agent runs in a pseudoconsole with the status bar
@@ -56,7 +56,7 @@ fn admit(args: &RunArgs, label: &str) -> io::Result<bool> {
             Admission::Refuse { need, safe_zone } => {
                 if args.force {
                     eprintln!(
-                        "optimus: --force: starting {label} with only {} free of the {} it needs",
+                        "loadline: --force: starting {label} with only {} free of the {} it needs",
                         format_size(safe_zone),
                         format_size(need)
                     );
@@ -64,7 +64,7 @@ fn admit(args: &RunArgs, label: &str) -> io::Result<bool> {
                 }
                 if !args.wait {
                     eprintln!(
-                        "optimus: not starting {label}: it needs {}, but only {} is safe to use \
+                        "loadline: not starting {label}: it needs {}, but only {} is safe to use \
                          ({} free RAM, {} commit headroom, {} kept for Windows).\n\
                          Close an agent, or use --wait to start when memory frees up.",
                         format_size(need),
@@ -83,7 +83,7 @@ fn admit(args: &RunArgs, label: &str) -> io::Result<bool> {
                 }
                 if !announced {
                     eprintln!(
-                        "optimus: waiting for memory: {label} needs {}, {} is safe now",
+                        "loadline: waiting for memory: {label} needs {}, {} is safe now",
                         format_size(need),
                         format_size(safe_zone)
                     );
@@ -207,7 +207,7 @@ impl Guard {
             .and_then(|j| j.active_processes().ok())
             .unwrap_or(0);
 
-        let mut summary = format!("optimus: {} exited with code {code}", self.label);
+        let mut summary = format!("loadline: {} exited with code {code}", self.label);
         if let Some(peak) = peak {
             summary += &format!(", peak {}", format_size(peak));
             if let Some(budget) = self.budget {
@@ -261,7 +261,7 @@ fn enroll(
             "could not apply hard budget: {e}"
         ))),
         Err(e) => {
-            eprintln!("optimus: warning: running {label} unguarded ({e})");
+            eprintln!("loadline: warning: running {label} unguarded ({e})");
             Ok(None)
         }
     }
@@ -279,7 +279,7 @@ fn create_job(args: &RunArgs, label: &str) -> io::Result<Option<Job>> {
             "could not apply hard budget: {e}"
         ))),
         Err(e) => {
-            eprintln!("optimus: warning: running {label} unguarded ({e})");
+            eprintln!("loadline: warning: running {label} unguarded ({e})");
             Ok(None)
         }
     }

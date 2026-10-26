@@ -1,4 +1,4 @@
-//! `optimus top`: what each agent tree really commits, against system headroom.
+//! `loadline top`: what each agent tree really commits, against system headroom.
 
 use std::collections::HashSet;
 use std::fmt::Write as _;

@@ -155,12 +155,12 @@ pub fn is_alive(pid: u32) -> bool {
 }
 
 unsafe extern "system" fn swallow_interrupt(ctrl: u32) -> BOOL {
-    // Ctrl+C belongs to the agent (it interrupts a turn). Optimus must survive it, or
+    // Ctrl+C belongs to the agent (it interrupts a turn). Loadline must survive it, or
     // kill-on-close would take the agent down with it. Close/logoff still end us.
     BOOL::from(ctrl == CTRL_C_EVENT || ctrl == CTRL_BREAK_EVENT)
 }
 
-/// Keep Optimus alive on Ctrl+C. A handler routine is not inherited by children,
+/// Keep Loadline alive on Ctrl+C. A handler routine is not inherited by children,
 /// unlike `SetConsoleCtrlHandler(None, TRUE)`, so the agent still receives Ctrl+C.
 pub fn survive_ctrl_c() {
     unsafe {

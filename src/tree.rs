@@ -2,7 +2,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-/// Executable names (lowercase, no `.exe`) treated as agent roots by `optimus top`.
+/// Executable names (lowercase, no `.exe`) treated as agent roots by `loadline top`.
 pub const AGENT_NAMES: &[&str] = &[
     "claude",
     "codex",

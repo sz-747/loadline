@@ -22,12 +22,12 @@
 - **Status:** Decided (2026-10-26).
 - **Current behavior:** end them (kill-on-close). `--keep-children` opts out.
 
-## DS-004 Branch, name and `main`
+## DS-004 Name and home
 
-- **Question:** does the memory guard replace `main` of sz-747/Optimus, and does it keep the name "Optimus"?
-- **Status:** Deferred. **Owner:** maintainer.
-- **Current behavior:** lives on the public `memory-guard` branch (pushed 2026-10-26); `main` untouched.
-- **Reopen trigger:** v0.1 used on the 16 GB laptop for a few days, before replacing `main` or launching.
+- **Question:** keep the Optimus name and repository, or start fresh?
+- **Status:** Decided (2026-10-26, maintainer).
+- **Current behavior:** renamed to loadline (a ship's load line marks the most it can safely carry) and moved to its own repository, sz-747/loadline. Optimus keeps the old multiplexer.
+- **Evidence:** "loadline" was free on crates.io with no conflicting tool on GitHub (checked 2026-10-26).
 
 ## DS-005 How the user learns about a soft-budget crossing mid-session
 
@@ -40,7 +40,7 @@
 ## DS-006 How the memory guard is shown
 
 - **Question:** status bar inside the agent's window, Windows Terminal split pane, or a full-screen dashboard?
-- **Why it matters:** the bar means Optimus hosts the agent in a pseudoconsole and redraws its screen (rendering risk); a split pane is Windows Terminal only; a dashboard needs a second window.
+- **Why it matters:** the bar means loadline hosts the agent in a pseudoconsole and redraws its screen (rendering risk); a split pane is Windows Terminal only; a dashboard needs a second window.
 - **Status:** Decided (2026-10-26, maintainer).
 - **Current behavior:** status bar on by default in an interactive console; `--no-bar` opts out; automatic plain mode when output is redirected. Lines scrolled off the agent's screen are pushed into the real terminal's scrollback.
 - **Evidence:** `tests/bar.rs`; real Claude Code and Codex render correctly under the bar (2026-10-26).

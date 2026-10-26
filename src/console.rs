@@ -1,4 +1,4 @@
-//! The real console Optimus runs in: raw VT input, UTF-8, size, and restoring it all.
+//! The real console Loadline runs in: raw VT input, UTF-8, size, and restoring it all.
 
 use std::io;
 

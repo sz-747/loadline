@@ -1,4 +1,4 @@
-//! End-to-end checks of the status bar: Optimus runs inside a pseudoconsole of its own,
+//! End-to-end checks of the status bar: Loadline runs inside a pseudoconsole of its own,
 //! and the test reads the screen it draws, types into it, and presses Ctrl+C.
 
 use std::path::Path;
@@ -8,7 +8,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use avt::Vt;
-use optimus::pty::{command_line, ConPty};
+use loadline::pty::{command_line, ConPty};
 
 const COLS: u16 = 100;
 const ROWS: u16 = 30;
@@ -26,9 +26,9 @@ impl Harness {
         let home = tempfile::tempdir().unwrap();
         // Child processes inherit this; each test binary runs its tests in one process,
         // and every test points it at its own directory before spawning.
-        std::env::set_var("OPTIMUS_HOME", home.path());
+        std::env::set_var("LOADLINE_HOME", home.path());
         let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
-        let line = command_line(Path::new(env!("CARGO_BIN_EXE_optimus")), &args);
+        let line = command_line(Path::new(env!("CARGO_BIN_EXE_loadline")), &args);
         let pty = Arc::new(ConPty::spawn_suspended(&line, COLS, ROWS).expect("spawn"));
         pty.resume().expect("resume");
         let (tx, rx) = mpsc::channel();
@@ -56,7 +56,7 @@ impl Harness {
             match self.rx.recv_timeout(left.min(Duration::from_millis(50))) {
                 Ok(bytes) => {
                     self.pending.extend_from_slice(&bytes);
-                    let text = optimus::session::decode_utf8(&mut self.pending);
+                    let text = loadline::session::decode_utf8(&mut self.pending);
                     self.vt.feed_str(&text);
                 }
                 Err(mpsc::RecvTimeoutError::Timeout) => {}
@@ -126,7 +126,7 @@ fn bar_under_agent_output_and_summary_after() {
     assert_eq!(h.wait_exit(Duration::from_secs(20)), Some(0));
     let screen = h.screen();
     assert!(
-        screen.contains("optimus: cmd exited with code 0"),
+        screen.contains("loadline: cmd exited with code 0"),
         "{screen}"
     );
     assert!(
@@ -143,9 +143,9 @@ fn keystrokes_reach_the_agent() {
         "{}",
         h.screen()
     );
-    h.type_text("echo typed-through-optimus\r");
+    h.type_text("echo typed-through-loadline\r");
     assert!(
-        h.wait_for("\ntyped-through-optimus", Duration::from_secs(10)),
+        h.wait_for("\ntyped-through-loadline", Duration::from_secs(10)),
         "{}",
         h.screen()
     );
@@ -154,7 +154,7 @@ fn keystrokes_reach_the_agent() {
 }
 
 #[test]
-fn ctrl_c_goes_to_the_agent_not_optimus() {
+fn ctrl_c_goes_to_the_agent_not_loadline() {
     let mut h = Harness::start(&[
         "run",
         "--",
@@ -173,8 +173,8 @@ fn ctrl_c_goes_to_the_agent_not_optimus() {
     let code = h.wait_exit(Duration::from_secs(15));
     let screen = h.screen();
     assert!(screen.contains("agent-cleanup-ran"), "{screen}");
-    // Optimus survived Ctrl+C long enough to report the agent's exit.
-    assert!(screen.contains("optimus: powershell exited"), "{screen}");
+    // Loadline survived Ctrl+C long enough to report the agent's exit.
+    assert!(screen.contains("loadline: powershell exited"), "{screen}");
     assert!(code.is_some());
 }
 

@@ -1,10 +1,10 @@
 [package]
-name = "optimus"
+name = "loadline"
 version = "0.1.0"
 edition = "2021"
 description = "Memory guard for AI coding agents on Windows: per-agent budgets, admission control, no orphans"
 license = "MIT"
-repository = "https://github.com/sz-747/Optimus"
+repository = "https://github.com/sz-747/loadline"
 
 [dependencies]
 avt = "0.18.0"

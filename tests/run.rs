@@ -1,16 +1,16 @@
-//! End-to-end checks of `optimus run` against real processes and real job limits.
+//! End-to-end checks of `loadline run` against real processes and real job limits.
 //! Memory pressure comes from PowerShell allocating a .NET byte array, which commits
 //! the memory immediately.
 
 use std::path::Path;
 use std::process::{Command, Output};
 
-fn optimus(home: &Path, args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_optimus"))
-        .env("OPTIMUS_HOME", home)
+fn loadline(home: &Path, args: &[&str]) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_loadline"))
+        .env("LOADLINE_HOME", home)
         .args(args)
         .output()
-        .expect("run optimus")
+        .expect("run loadline")
 }
 
 fn alloc_script(mb: u32, sleep_secs: u32) -> String {
@@ -28,7 +28,7 @@ fn stderr(out: &Output) -> String {
 #[test]
 fn propagates_exit_code() {
     let home = tempfile::tempdir().unwrap();
-    let out = optimus(home.path(), &["run", "--", "cmd", "/c", "exit", "7"]);
+    let out = loadline(home.path(), &["run", "--", "cmd", "/c", "exit", "7"]);
     assert_eq!(out.status.code(), Some(7), "{}", stderr(&out));
     assert!(stderr(&out).contains("exited with code 7"));
 }
@@ -37,7 +37,7 @@ fn propagates_exit_code() {
 fn soft_budget_reports_without_killing() {
     let home = tempfile::tempdir().unwrap();
     let script = alloc_script(400, 3);
-    let out = optimus(
+    let out = loadline(
         home.path(),
         &[
             "run",
@@ -60,7 +60,7 @@ fn soft_budget_reports_without_killing() {
 fn hard_budget_stops_the_allocation() {
     let home = tempfile::tempdir().unwrap();
     let script = alloc_script(400, 1) + "; exit 0";
-    let out = optimus(
+    let out = loadline(
         home.path(),
         &[
             "run",
@@ -82,7 +82,7 @@ fn hard_budget_stops_the_allocation() {
 #[test]
 fn refuses_what_cannot_fit() {
     let home = tempfile::tempdir().unwrap();
-    let out = optimus(
+    let out = loadline(
         home.path(),
         &["run", "--budget", "100T", "--", "cmd", "/c", "exit", "0"],
     );
@@ -94,8 +94,8 @@ fn refuses_what_cannot_fit() {
 #[test]
 fn ends_leftover_processes() {
     let home = tempfile::tempdir().unwrap();
-    // `start /b` leaves a ping running after cmd exits: an orphan without Optimus.
-    let out = optimus(
+    // `start /b` leaves a ping running after cmd exits: an orphan without Loadline.
+    let out = loadline(
         home.path(),
         &[
             "run",
@@ -118,7 +118,7 @@ fn ends_leftover_processes() {
 #[test]
 fn top_json_is_valid() {
     let home = tempfile::tempdir().unwrap();
-    let out = optimus(home.path(), &["top", "--json"]);
+    let out = loadline(home.path(), &["top", "--json"]);
     assert!(out.status.success());
     let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("json");
     assert!(v["safe_zone"].as_u64().is_some());

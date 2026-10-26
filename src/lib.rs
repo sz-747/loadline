@@ -1,4 +1,4 @@
-//! Optimus: a memory guard for AI coding agents on Windows.
+//! Loadline: a memory guard for AI coding agents on Windows.
 
 pub mod admission;
 pub mod console;
