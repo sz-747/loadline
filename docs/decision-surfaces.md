@@ -26,8 +26,8 @@
 
 - **Question:** does the memory guard replace `main` of sz-747/Optimus, and does it keep the name "Optimus"?
 - **Status:** Deferred. **Owner:** maintainer.
-- **Current behavior:** lives on the `memory-guard` branch; `main` untouched; local commits only.
-- **Reopen trigger:** v0.1 used on the 16 GB laptop for a few days, before any public push or launch.
+- **Current behavior:** lives on the public `memory-guard` branch (pushed 2026-10-26); `main` untouched.
+- **Reopen trigger:** v0.1 used on the 16 GB laptop for a few days, before replacing `main` or launching.
 
 ## DS-005 How the user learns about a soft-budget crossing mid-session
 
